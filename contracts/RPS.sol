@@ -10,6 +10,11 @@ contract RPS {
     mapping(address => address) private _opponents;
     mapping(address => uint) private _sign;
     uint private _price;
+    
+    event Deposit(address indexed sender, uint amount);
+    event Withdrew(address indexed receiver, uint amount);
+    event Played(address indexed p1, address indexed p2, uint winner);
+
 
     constructor(uint price_) {
         _price == price_;
@@ -18,35 +23,60 @@ contract RPS {
     function balance() public view returns (uint) {
         return _balances[msg.sender];
     }
+    function opponent() public view returns (address) {
+        return _opponents[msg.sender];
+    }
 
     function deposit() public payable returns(bool) {
         _balances[msg.sender] += msg.value;
+        emit Deposit(msg.sender, msg.value);
         return true;
     }
     function withdraw() public returns (bool) {
         uint amount = _balances[msg.sender];
         _balances[msg.sender] = 0;
         payable(msg.sender).sendValue(amount);
+        emit Withdrew(msg.sender, amount);
         return true;
     }
+    function createParty(address opponent_) public returns (bool) {
+        require(opponent() == address(0));
+        _opponents[msg.sender] = opponent_;
+        return true;
+    }
+    function joinParty(address opponent_) public returns (bool) {
+        require(opponent() == address(0));
+        require(_opponents[opponent_] != address(0));
+        _opponents[msg.sender] = opponent_;
+        return true;
+    }
+    function leaveParty() public returns (bool) {
+        require(opponent() != address(0));
+        _opponents[msg.sender] = address(0);
+        return true;
+    }
+
     function play(uint sign) public returns (bool) {
-        require(_opponents[msg.sender] != address(0));
+        require(opponent() != address(0));
+        require(_opponents[opponent()] != address(0));
+        require(_balances[msg.sender] >= _price);
+        _balances[msg.sender] -= _price;
         require(sign == 1 || sign == 2 || sign == 3);
         _sign[msg.sender] = sign;
         if (_sign[_opponents[msg.sender]] != 0) {
             uint res = _compare(_sign[_opponents[msg.sender]], _sign[msg.sender]);
             if (res == 0) {
-                _balances[msg.sender] += _price / 2;
-                _balances[_opponents[msg.sender]] += _price / 2;
-            } else if (res == 1) {
-                _balances[_opponents[msg.sender]] += _price;
-            } else if (res == 2) {
                 _balances[msg.sender] += _price;
+                _balances[opponent()] += _price;
+            } else if (res == 1) {
+                _balances[opponent()] += _price * 2;
+            } else if (res == 2) {
+                _balances[msg.sender] += _price * 2;
             }
-            _sign[_opponents[msg.sender]] = 0;
+            emit Played(opponent(), msg.sender, res);
+            _sign[opponent()] = 0;
             _sign[msg.sender] = 0;
-            _opponents[_opponents[msg.sender]] = address(0);
-            _opponents[msg.sender] = address(0);
+            
         }
         return true;
     }
