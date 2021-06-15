@@ -13,7 +13,7 @@ contract RPS {
     
     event Deposit(address indexed sender, uint amount);
     event Withdrew(address indexed receiver, uint amount);
-    event Played(address indexed p1, address indexed p2, uint winner);
+    event Played(address indexed p1, address indexed p2, uint s1, uint s2, uint winner);
 
 
     constructor(uint price_) {
@@ -63,8 +63,8 @@ contract RPS {
         _balances[msg.sender] -= _price;
         require(sign == 1 || sign == 2 || sign == 3);
         _sign[msg.sender] = sign;
-        if (_sign[_opponents[msg.sender]] != 0) {
-            uint res = _compare(_sign[_opponents[msg.sender]], _sign[msg.sender]);
+        if (_sign[opponent()] != 0) {
+            uint res = _compare(_sign[opponent()], _sign[msg.sender]);
             if (res == 0) {
                 _balances[msg.sender] += _price;
                 _balances[opponent()] += _price;
@@ -73,10 +73,9 @@ contract RPS {
             } else if (res == 2) {
                 _balances[msg.sender] += _price * 2;
             }
-            emit Played(opponent(), msg.sender, res);
+            emit Played(opponent(), msg.sender, _sign[opponent()], _sign[msg.sender], res);
             _sign[opponent()] = 0;
             _sign[msg.sender] = 0;
-            
         }
         return true;
     }

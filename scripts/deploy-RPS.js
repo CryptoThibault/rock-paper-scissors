@@ -16,15 +16,15 @@ async function main() {
   console.log('Deploying contracts with the account:', deployer.address);
 
   // We get the contract to deploy
-  const Greeter = await hre.ethers.getContractFactory('Greeter');
-  const greeter = await Greeter.deploy('Hello, Hardhat!');
+  const RPS = await hre.ethers.getContractFactory('RPS');
+  const rps = await RPS.deploy('Hello, Hardhat!');
 
   // Attendre que le contrat soit réellement déployé, cad que la transaction de déploiement
   // soit incluse dans un bloc
-  await greeter.deployed();
+  await rps.deployed();
 
   // Create/update deployed.json and print usefull information on the console.
-  await deployed('Greeter', hre.network.name, greeter.address);
+  await deployed('RPS', hre.network.name, rps.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
